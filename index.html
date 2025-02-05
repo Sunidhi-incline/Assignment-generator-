@@ -1,13 +1,472 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + Preact</title>
-  </head>
-  <body>
-    <div id="app"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard - Proctored Mode</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: #f0f2f5;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+
+        .login-form, .subject-selection, .topics-list, .assignment-view {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: none;
+        }
+
+        .login-form {
+            display: block;
+            max-width: 400px;
+            margin: auto;
+        }
+
+        h2 {
+            color: #1a73e8;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+        }
+
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #1a73e8;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background: #1557b0;
+        }
+
+        .topic-card {
+            background: white;
+            padding: 20px;
+            margin: 10px 0;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            border: 1px solid #ddd;
+        }
+
+        .topic-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+        }
+
+        .back-btn {
+            background: #666;
+        }
+
+        .back-btn:hover {
+            background: #555;
+        }
+
+        .timer {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #1a73e8;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-weight: bold;
+            display: none;
+            z-index: 1000;
+        }
+
+        .proctoring-alert {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #ff4444;
+            color: white;
+            padding: 15px 30px;
+            border-radius: 5px;
+            display: none;
+            z-index: 1000;
+        }
+
+        .assignment-container {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.2);
+            z-index: 1000;
+            width: 90%;
+            max-width: 500px;
+        }
+
+        .modal-backdrop {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+        }
+
+        .rules-list {
+            margin: 20px 0;
+            padding-left: 20px;
+        }
+
+        .rules-list li {
+            margin: 10px 0;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Login Form -->
+        <div class="login-form" id="loginForm">
+            <h2>Student Login</h2>
+            <div class="input-group">
+                <label for="regno">Registration Number</label>
+                <input type="text" id="regno" placeholder="Enter your registration number">
+            </div>
+            <div class="input-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" placeholder="Enter your password">
+            </div>
+            <button onclick="login()">Login</button>
+        </div>
+
+        <!-- Subject Selection -->
+        <div class="subject-selection" id="subjectSelection">
+            <h2>Select Subject</h2>
+            <div class="input-group">
+                <label for="subject">Choose a subject</label>
+                <select id="subject">
+                    <option value="">Select a subject</option>
+                    <option value="mathematics">Mathematics</option>
+                    <option value="physics">Physics</option>
+                    <option value="chemistry">Chemistry</option>
+                    <option value="biology">Biology</option>
+                </select>
+            </div>
+            <button onclick="showTopics()">View Topics</button>
+            <button class="back-btn" onclick="logout()">Logout</button>
+        </div>
+
+        <!-- Topics List -->
+        <div class="topics-list" id="topicsList">
+            <h2>Topics</h2>
+            <div id="topicsContainer"></div>
+            <button class="back-btn" onclick="backToSubjects()">Back to Subjects</button>
+        </div>
+
+        <!-- Assignment View -->
+        <div class="assignment-view" id="assignmentView">
+            <h2 id="assignmentTitle">Assignment</h2>
+            <div id="assignmentContainer"></div>
+            <button onclick="startExam()" id="startButton">Start Assignment</button>
+            <button class="back-btn" onclick="backToTopics()">Back to Topics</button>
+        </div>
+    </div>
+
+    <!-- Timer -->
+    <div class="timer" id="timer">Time Remaining: 60:00</div>
+
+    <!-- Proctoring Alert -->
+    <div class="proctoring-alert" id="proctoringAlert">
+        Proctored Mode Enabled
+    </div>
+
+    <!-- Start Exam Modal -->
+    <div class="modal-backdrop" id="modalBackdrop"></div>
+    <div class="modal" id="startExamModal">
+        <h2>Ready to Start Assignment?</h2>
+        <div class="rules-list">
+            <ul>
+                <li>Assignment duration: 60 minutes</li>
+                <li>Full-screen mode will be enabled</li>
+                <li>Tab switching is not allowed</li>
+                <li>Developer tools access is disabled</li>
+                <li>Right-click is disabled</li>
+            </ul>
+        </div>
+        <button onclick="beginExam()">Begin Assignment</button>
+        <button class="back-btn" onclick="hideModal('startExamModal')">Cancel</button>
+    </div>
+
+    <script>
+        // Configuration
+        const validUser = {
+            regno: "12345",
+            password: "password123"
+        };
+
+        const topics = {
+            mathematics: ["Algebra", "Calculus", "Geometry", "Trigonometry"],
+            physics: ["Mechanics", "Thermodynamics", "Optics", "Electricity"],
+            chemistry: ["Organic", "Inorganic", "Physical", "Analytical"],
+            biology: ["Botany", "Zoology", "Genetics", "Ecology"]
+        };
+
+        let currentSubject = '';
+        let currentTopic = '';
+        let timerInterval;
+        let timeLeft = 3600; // 60 minutes in seconds
+
+        // Proctoring Functions
+        function enableProctoring() {
+            enableFullscreen();
+            startTimer();
+            showAlert();
+            preventTabSwitching();
+            disableDevTools();
+        }
+
+        function enableFullscreen() {
+            const elem = document.documentElement;
+            if (elem.requestFullscreen) {
+                elem.requestFullscreen();
+            } else if (elem.webkitRequestFullscreen) {
+                elem.webkitRequestFullscreen();
+            } else if (elem.msRequestFullscreen) {
+                elem.msRequestFullscreen();
+            }
+        }
+
+        function preventTabSwitching() {
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'hidden') {
+                    alert('Warning: Tab switching is not allowed during the assignment!');
+                    logViolation('Tab switching detected');
+                }
+            });
+        }
+
+        function disableDevTools() {
+            document.addEventListener('contextmenu', event => event.preventDefault());
+            document.onkeydown = function(e) {
+                if (e.key === "F12" || (e.ctrlKey && e.shiftKey && e.key === 'I')) {
+                    alert('Developer tools are disabled during the assignment.');
+                    logViolation('Attempted to open developer tools');
+                    return false;
+                }
+            };
+        }
+
+        // Navigation Functions
+        function login() {
+            const regno = document.getElementById('regno').value;
+            const password = document.getElementById('password').value;
+
+            if (regno === validUser.regno && password === validUser.password) {
+                showPage('subjectSelection');
+                hidePage('loginForm');
+            } else {
+                alert('Invalid credentials. Please try again.');
+            }
+        }
+
+        function logout() {
+            showPage('loginForm');
+            hidePage('subjectSelection');
+            document.getElementById('regno').value = '';
+            document.getElementById('password').value = '';
+        }
+
+        function showTopics() {
+            currentSubject = document.getElementById('subject').value;
+            if (!currentSubject) {
+                alert('Please select a subject');
+                return;
+            }
+
+            const topicsContainer = document.getElementById('topicsContainer');
+            topicsContainer.innerHTML = '';
+
+            topics[currentSubject].forEach(topic => {
+                const topicCard = document.createElement('div');
+                topicCard.className = 'topic-card';
+                topicCard.textContent = topic;
+                topicCard.onclick = () => selectTopic(topic);
+                topicsContainer.appendChild(topicCard);
+            });
+
+            showPage('topicsList');
+            hidePage('subjectSelection');
+        }
+
+        function selectTopic(topic) {
+            currentTopic = topic;
+            document.getElementById('assignmentTitle').textContent = `${currentTopic} Assignment`;
+            showPage('assignmentView');
+            hidePage('topicsList');
+            generateAssignment();
+        }
+
+        // UI Helper Functions
+        function showPage(pageId) {
+            document.getElementById(pageId).style.display = 'block';
+        }
+
+        function hidePage(pageId) {
+            document.getElementById(pageId).style.display = 'none';
+        }
+
+        function showModal(modalId) {
+            document.getElementById(modalId).style.display = 'block';
+            document.getElementById('modalBackdrop').style.display = 'block';
+        }
+
+        function hideModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+            document.getElementById('modalBackdrop').style.display = 'none';
+        }
+
+        function showAlert() {
+            const alert = document.getElementById('proctoringAlert');
+            alert.style.display = 'block';
+            setTimeout(() => {
+                alert.style.display = 'none';
+            }, 5000);
+        }
+
+        // Timer Functions
+        function startTimer() {
+            const timerDisplay = document.getElementById('timer');
+            timerDisplay.style.display = 'block';
+            
+            clearInterval(timerInterval);
+            timeLeft = 3600;
+            
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                const minutes = Math.floor(timeLeft / 60);
+                const seconds = timeLeft % 60;
+                timerDisplay.textContent = `Time Remaining: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+                
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    alert('Time is up! Your assignment will be submitted automatically.');
+                    backToTopics();
+                }
+            }, 1000);
+        }
+
+        // Assignment Functions
+        function startExam() {
+            showModal('startExamModal');
+        }
+
+        function beginExam() {
+            hideModal('startExamModal');
+            enableProctoring();
+            generateAssignment();
+        }
+
+        function generateAssignment() {
+            const assignmentContainer = document.getElementById('assignmentContainer');
+            const assignment = createAssignment(currentSubject, currentTopic);
+            assignmentContainer.innerHTML = `
+                <div class="assignment-container">
+                    <h3>${assignment.title}</h3>
+                    <div class="assignment-content">${assignment.content}</div>
+                </div>
+            `;
+        }
+
+        function createAssignment(subject, topic) {
+            return {
+                title: `${topic} Assignment`,
+                content: `
+                    <p>Instructions:</p>
+                    <ul>
+                        <li>Answer all questions</li>
+                        <li>Show your work clearly</li>
+                        <li>You have 60 minutes to complete this assignment</li>
+                    </ul>
+                    <p>Questions:</p>
+                    <ol>
+                        <li>Sample question 1 for ${topic}</li>
+                        <li>Sample question 2 for ${topic}</li>
+                        <li>Sample question 3 for ${topic}</li>
+                        <li>Sample question 4 for ${topic}</li>
+                    </ol>
+                `
+            };
+        }
+
+        function logViolation(violation) {
+            console.log(`Violation detected: ${violation} at ${new Date().toISOString()}`);
+            // In production, send to server
+        }
+
+        // Navigation Functions
+        function backToSubjects() {
+            showPage('subjectSelection');
+            hidePage('topicsList');
+        }
+
+        function backToTopics() {
+            if (document.fullscreenElement) {
+                document.exitFullscreen();
+            }
+            clearInterval(timerInterval);
+            document.getElementById('timer').style.display = 'none';
+            showPage('topicsList');
+            hidePage('assignmentView');
+        }
+    </script>
+</body>
 </html>
