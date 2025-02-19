@@ -1,18 +1,26 @@
 {
   "name": "frontend",
-  "private": true,
-  "version": "0.0.0",
-  "type": "module",
+  "version": "1.0.0",
+  "main": "vite.config.js",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview"
   },
-  "dependencies": {
-    "preact": "^10.25.3"
-  },
   "devDependencies": {
-    "@preact/preset-vite": "^2.9.3",
-    "vite": "^6.0.5"
-  }
+    "@preact/preset-vite": "^2.10.1",
+    "vite": "^6.1.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Sunidhi-incline/Assignment-generator-.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Sunidhi-incline/Assignment-generator-/issues"
+  },
+  "homepage": "https://github.com/Sunidhi-incline/Assignment-generator-#readme",
+  "description": ""
 }
